@@ -1,4 +1,4 @@
-#define NUM_WELLS 10
+#define NUM_WELLS 2
 
 #define SEND_CONFIRMATION_MESSAGES 1
 #if SEND_CONFIRMATION_MESSAGES
@@ -26,22 +26,25 @@ void setup()
     smooth_well_state = new bool[NUM_WELLS];
     well_switch_times = new long[NUM_WELLS];
 
-    // put your setup code here, to run once:
-    //TODO assign pin numbers
     int8_t first_well_pin = 2;
-    int8_t first_pump_pin = 20;
+    int8_t first_pump_pin = 5;
     for (int i = 0; i < NUM_WELLS; i++)
     {
         well_pins[i] = first_well_pin++;
         pinMode(well_pins[i], INPUT);
         pump_pins[i] = first_pump_pin++;
         pinMode(pump_pins[i], OUTPUT);
+        digitalWrite(pump_pins[i], LOW);
+        smooth_well_state[i] = false;
+        well_switch_times[i] = 0;
     }
+
+    Serial.begin(9600);
+    // Serial.println("Hello!");
 }
 
 void loop()
 {
-    // put your main code here, to run repeatedly:
     for (int i = 0; i < NUM_WELLS; i++)
     {
         int state = digitalRead(well_pins[i]);
@@ -75,8 +78,12 @@ void loop()
         int8_t cmd = Serial.read();
         if (cmd == CMD_SEND_WELL_STATE)
         {
+            CONFIRM("Reading well idx");
             int8_t wi = Serial.read();
-            Serial.println(smooth_well_state[wi]);
+            CONFIRM("Sending well state");
+            CONFIRM(wi);
+            Serial.write(0);
+            Serial.write((byte)(smooth_well_state[wi]));
         }
 
         else if (cmd == CMD_ACTIVATE_PUMP)
@@ -93,4 +100,6 @@ void loop()
             digitalWrite(pump_pins[pi], LOW);
         }
     }
+
+    // Serial.println("hello");
 }
