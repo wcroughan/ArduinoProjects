@@ -26,55 +26,19 @@ const int8_t CMD_DEACTIVATE_PUMP = 3;
 
 const long MIN_DURATION_SWITCH_STATE = 100; //units: ms
 
+long next_well_check_millis = 0;
+const long MILLIS_BETWEEN_CHECKS = 500;
+
 void setup()
 {
-    well_pins = new int8_t[NUM_WELLS];
-    pump_pins = new int8_t[NUM_WELLS];
-    smooth_well_state = new bool[NUM_WELLS];
-    well_switch_times = new long[NUM_WELLS];
-
-    // put your setup code here, to run once:
-    //TODO assign pin numbers
-    int8_t first_well_pin = 2;
-    int8_t first_pump_pin = 20;
-    for (int i = 0; i < NUM_WELLS; i++)
-    {
-        well_pins[i] = first_well_pin++;
-        pinMode(well_pins[i], INPUT);
-        pump_pins[i] = first_pump_pin++;
-        pinMode(pump_pins[i], OUTPUT);
-    }
+    next_well_check_millis = millis();
 }
 
 void loop()
 {
-    // put your main code here, to run repeatedly:
-    for (int i = 0; i < NUM_WELLS; i++)
-    {
-        int state = digitalRead(well_pins[i]);
-        if (state == smooth_well_state[i])
-        {
-            well_switch_times[i] = 0;
-        }
-        else
-        {
-            //well is in different state that smooth state says
-            if (well_switch_times[i] == 0)
-            {
-                //this is first recording of different state, set well_switch_times
-                well_switch_times[i] = millis();
-            }
-            else
-            {
-                //been switched, check duration
-                if (millis() - well_switch_times[i] > MIN_DURATION_SWITCH_STATE)
-                {
-                    well_switch_times[i] = 0;
-                    smooth_well_state[i] = state;
-                }
-            }
-        }
-    }
+    long dtime = next_well_check_millis - millis();
+    delay(dtime);
+    next_well_check_millis = millis() + MILLIS_BETWEEN_CHECKS;
 
     if (Serial.available())
     {
